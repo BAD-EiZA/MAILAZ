@@ -27,5 +27,5 @@ ENV FROM_EMAIL=no-reply@hiatlaz.com
 
 ENV PORT=3101
 
-EXPOSE 3000
+EXPOSE 3101
 CMD ["pnpm", "start"]
