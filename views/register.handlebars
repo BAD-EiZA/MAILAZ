@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div
+      style="
+        width: 454px;
+        margin: auto;
+        border: 1px solid #e1e9f3;
+        border-radius: 8px;
+        background-color: #f9fbfd;
+
+        margin-top: 23px;
+      "
+    >
+      <div style="padding-top: 32px; padding-left: 32px; padding-right: 32px">
+        <div>
+            <img src="https://atlaz-content.s3.ap-southeast-1.amazonaws.com/atlaz-lms-v3/admin/cover/1c51w-atlaz_logo_school.png" height="24" alt="Logo">
+        </div>
+        <p
+          style="
+            margin-top: 24px;
+            color: #556070;
+            font-weight: 700;
+            font-size: 14px;
+            line-height: 20px;
+          "
+        >
+          Hi, {{ name }}!
+        </p>
+        <h5
+          style="
+            margin: 8px 0px;
+            font-size: 20px;
+            line-height: 28px;
+            font-weight: 500;
+          "
+        >
+          Thanks for joining Atlaz!
+        </h5>
+        <p style="font-size: 14px; line-height: 20px; color: #556070">
+          To get started, please confirm your email address by clicking the button
+          below. If you didn't register, please ignore this message.
+        </p>
+        <div style="margin: 40px 0px">
+          <a
+            href="{{ url }}"
+            style="text-decoration: none"
+          >
+            <button
+              style="
+                background-color: #fdbf47;
+                text-align: center;
+                padding: 8px 16px;
+                border-radius: 8px;
+                font-size: 16px;
+                line-height: 24px;
+                border: none;
+                color: #2a384c;
+                width: 100%;
+                cursor: pointer;
+              "
+            >
+              Confirm email
+            </button>
+          </a>
+        </div>
+      </div>
+      <div
+        style="
+          text-align: center;
+          color: #aaafb7;
+          background-color: #fdfdfe;
+          padding: 24px;
+          border-top: 1px solid #e1e9f3;
+          font-size: 12px;
+          font-weight: 400;
+          line-height: 16px;
+        "
+      >
+        © 2023 PT Atlaz Belajar Bahasa. All Right Reserved
+      </div>
+    </div>
+  </body>
+</html>

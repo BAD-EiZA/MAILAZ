@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Atlazset</title>
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap">
+  <title>Atlazset</title>
+  <style>
+    body {
+      line-height: 1;
+    }
+
+    ol,
+    ul {
+      list-style: none;
+    }
+
+    blockquote,
+    q {
+      quotes: none;
+    }
+
+    blockquote:before,
+    blockquote:after,
+    q:before,
+    q:after {
+      content: '';
+      content: none;
+    }
+
+    table {
+      border-collapse: collapse;
+      border-spacing: 0;
+    }
+
+    body {
+      font-family: "Nunito";
+      font-style: normal;
+      font-weight: 400;
+      font-size: 16px;
+      line-height: 24px;
+      color: #2a384c;
+    }
+
+    * {
+      margin: 0;
+      padding: 0
+    }
+  </style>
+</head>
+
+<body>
+  <div style="
+          display:flex; 
+          justify-content: center; 
+          padding-top: 24px; 
+        ">
+    <div style="
+            max-width: 348px; 
+            margin: auto;
+          ">
+      <div>
+        <div style="
+                text-align: center;
+                ">
+          <img src="https://atlaz-set.s3.ap-southeast-1.amazonaws.com/images/atlazset-logo.png" alt=""
+            style="height: 72px" />
+          <p style="
+                  margin-top: 24px; 
+                  margin-bottom: 0; 
+                  font-weight: 700; 
+                  font-size: 14px; 
+                  line-height: 20px;
+                  color: #556070;
+                ">
+            Test completion results on behalf of
+          </p>
+          <P style="
+                  margin-top: 8px; 
+                  margin-bottom: 0; 
+                  font-weight: 500;
+                  font-size: 20px; 
+                  line-height: 28px;
+                  color: #2A384C; 
+                ">
+            {{ name }}
+          </P>
+          <p style="
+                  margin-top: 8px; 
+                  margin-bottom: 0; 
+                  font-weight: 700; 
+                  font-size: 14px; 
+                  line-height: 20px;
+                  color: #556070; 
+                ">
+            has successfully completed the Atlaz English Test and has earned the English level:
+          </p>
+
+          <div style="
+                  padding: 72px 0px 72px 0px;
+                  background-image: url('https://atlaz-set.s3.ap-southeast-1.amazonaws.com/images/bg-level.png');
+                  background-repeat: no-repeat;
+                  background-size: cover;
+                  background-position: center;
+                ">
+            <div style="
+                    padding: 14px ;
+                    height: 240px;
+                    width: 240px;
+                    margin-left: auto;
+                    margin-right: auto;
+                    background-image: url('{{ level_image }}');
+                    background-repeat: no-repeat;
+                    background-size: cover;
+                    background-position: center;
+                  ">
+              <div style="
+                      padding: 17px;
+                      width: 100%;
+                      height: 100%; 
+                      box-sizing: border-box
+                    ">
+                <div style="
+                        display: table;
+                        width: 100%;
+                        height: 100%;
+                      ">
+                  <div style="
+                          display: table-cell;
+                          text-align: center;
+                          vertical-align: middle;
+                        ">
+                    <h3 style="
+                            margin-top: 0;
+                            margin-bottom: 0;
+                            font-weight: 500;
+                            font-size: 16px;
+                            line-height: 24px;
+                            color: white;
+                          ">
+                      Atlaz English Test
+                    </h3>
+
+                    <h1 style="
+                            margin-top: 0;
+                            margin-bottom: 0;
+                            font-weight: 500;
+                            font-size:36px;
+                            line-height: 40px; 
+                            color: white;
+                          ">
+                      {{ score }}/100
+                    </h1>
+
+                    <h3 style="
+                            margin-top: 8px;
+                            margin-bottom: 0;
+                            font-weight: 500;
+                            font-size: 20px;
+                            line-height: 28px;
+                            color: white;
+                          ">
+                      CEFR {{ level }}
+                      </h4>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <h6 style="
+                  margin-top: 0;
+                  margin-bottom: 0;
+                  font-weight: 500; 
+                  font-size: 16px; 
+                  line-height: 24px;
+                  color: #2A384C; 
+                ">
+            Awarded on:
+          </h6>
+          <p style="
+                  margin-top: 0;
+                  margin-bottom: 0;
+                  font-weight: 700;
+                  font-size: 14px;
+                  line-height: 20px;
+                  color:#556070
+                ">
+            {{ date }}
+          </p>
+        </div>
+      </div>
+
+      <div style="
+              margin-top: 80px
+            ">
+        <p style="
+                margin-top: 0;
+                margin-bottom: 0;
+                text-align: center;
+                font-weight: 700;
+                font-size: 16px;
+                line-height: 24px;
+                color: #2A384C;
+              ">
+          Can-do statements
+        </p>
+        <p style="
+                margin-top: 8px;
+                margin-bottom: 0;
+                text-align: center;
+                font-weight: 600;
+                font-size: 16px;
+                line-height: 24px;
+                color:#397CAB;
+              ">
+          Reading Comprehension
+        </p>
+        <div style="
+                margin-top: 0;
+                margin-bottom: 0;
+                text-align: center;
+                font-weight: 400;
+                font-size: 16px;
+                line-height: 24px;
+                color:#556070;
+              ">
+          {{{ reading_comprehension }}}
+        </div>
+
+        <p style="
+                margin-top: 8px;
+                margin-bottom: 0;
+                text-align: center;
+                font-weight: 600;
+                font-size: 16px;
+                line-height: 24px;
+                color:#397CAB;
+              ">
+          Oral Comprehension
+        </p>
+        <div style="
+                margin-top: 0;
+                margin-bottom: 0;
+                text-align: center;
+                font-weight: 400;
+                font-size: 16px;
+                line-height: 24px;
+                color:#556070;
+              ">
+          {{{ oral_comprehension }}}
+        </div>
+      </div>
+
+      <p style="
+              margin-top: 24px;
+              margin-bottom: 0;
+              text-align: center;
+              font-weight: 700;
+              font-size: 16px;
+              line-height: 24px;
+              color: #2a384c;
+            ">
+        Recommendation books for you
+      </p>
+      <div style="
+              display: table;
+              width: 100%;
+              margin-top: 8px;
+              margin-bottom: 0;
+            ">
+        {{#each recomendations}}
+        {{#with this}}  
+
+        <div style="
+              display: table-cell;
+              text-align: center;
+              vertical-align: middle;
+              padding-right: 8px;
+              padding-left: 8px;
+        ">
+
+          <div style="
+                      border-radius: 8px;
+                      border: 1px solid rgba(0, 0, 0, 0.1);
+                    ">
+            <img src={{this.book_image}} alt="" style="
+                        width: 100%;
+                        border-top-left-radius: 8px;
+                        border-top-right-radius: 8px
+                      " />
+            <div style="
+                        text-align: center;
+                      ">
+              <p style="
+                          margin-top: 8px;
+                          margin-bottom: 0;
+                          font-weight: 700;
+                          font-size: 12px;
+                          line-height: 16px;
+                          color: #2A384C;
+                        ">
+                {{this.book_recomendation}}
+              </p>
+              <p style="
+                          margin-top: 4px;
+                          margin-bottom: 16px;
+                          font-weight: 600;
+                          font-size: 12px;
+                          line-height: 16px;
+                          color: #556070;
+                        ">
+                CEFR {{this.level}}
+              </p>
+            </div>
+          </div>
+
+        </div>      
+        
+        {{/with}}
+        {{/each}}
+
+      </div>
+
+      <div style="
+              margin-top: 40px;
+              margin-bottom: 40px; 
+              border-radius: 8px;
+              margin-right: 8px;
+              margin-left: 8px;
+              overflow: hidden;
+              overflow: hidden;border: 1px solid rgba(0, 0, 0, 0.1);
+            ">
+        <img style="width: 100%" src="https://atlaz-set.s3.ap-southeast-1.amazonaws.com/images/banner-atlazset-2.png"
+          alt="">
+
+        <div style="
+          padding: 8px 16px;
+        ">
+          <p style="
+              margin-top: 0;
+              margin-bottom: 16px;
+              font-weight: 400;
+              font-size: 12px;
+              line-height: 16px;
+              color:#556070;
+            ">
+            Get an easier and more enjoyable learning experience with Atlaz now!
+          </p>
+          <a href="https://hiatlaz.com/" target="_blank" style="
+                border-radius: 8px; 
+                background-color: #FDBF47;
+                border: none;
+                padding-top: 6px;
+                padding-bottom: 6px;
+                font-weight: 500;
+                box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1), 0px 1px 2px rgba(0, 0, 0, 0.06);
+                cursor: pointer;
+                font-weight: 500;
+                font-size: 14px;
+                line-height: 20px;
+                color: #2A384C;
+                widht: 100%;
+                text-align: center;
+                display: block;
+            ">
+              Check now
+          </a>
+        </div>
+            
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

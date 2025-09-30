@@ -2,7 +2,8 @@ require("dotenv").config();
 const fastify = require("fastify");
 const cors = require("@fastify/cors");
 const nodemailer = require("nodemailer");
-
+const hbs = require("nodemailer-express-handlebars").default;
+const path = require("path");
 const isProd = process.env.NODE_ENV === "production";
 const app = fastify({
   logger: isProd
@@ -45,7 +46,16 @@ const transporter = nodemailer.createTransport({
     pass: process.env.SMTP_PASS,
   },
 });
-
+transporter.use(
+  "compile",
+  hbs({
+    viewEngine: {
+      partialsDir: path.resolve("./views/"),
+      defaultLayout: false,
+    },
+    viewPath: path.resolve("./views/"),
+  })
+);
 // Optional: verify SMTP on startup (non-blocking)
 transporter
   .verify()
@@ -74,7 +84,7 @@ app.post(
     schema: {
       body: {
         type: "object",
-        required: ["recipients", "subject", "html"],
+        required: ["recipients", "subject"],
         properties: {
           recipients: {
             type: "array",
@@ -89,9 +99,10 @@ app.post(
               additionalProperties: false,
             },
           },
+          context: { type: "object" },
+          template: { type: "string" },
           subject: { type: "string", minLength: 1, maxLength: 255 },
-          html: { type: "string", minLength: 1 },
-          from: {type: "string", minLength: 1},
+          from: { type: "string", minLength: 1 },
           individual: { type: "boolean", default: false },
         },
         additionalProperties: false,
@@ -99,7 +110,14 @@ app.post(
     },
   },
   async (req, reply) => {
-    const { recipients, subject, html, from:userFrom, individual = false } = req.body;
+    const {
+      recipients,
+      subject,
+      template,
+      context = {},
+      from: userFrom,
+      individual = false,
+    } = req.body;
 
     // Helper to format "Name <email>"
     const fmt = (r) => (r.name ? `"${r.name}" <${r.email}>` : r.email);
@@ -115,7 +133,8 @@ app.post(
               from,
               to: fmt(r),
               subject,
-              html,
+              template, // use template instead of html
+              context, // handlebars variables
             })
           )
         );
