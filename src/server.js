@@ -63,9 +63,9 @@ app.register(swagger, {
   openapi: {
     openapi: "3.1.0",
     info: {
-      title: "Mail Service",
+      title: "Atlaz Mail Service",
       description:
-        "Simple mailer API using Fastify + Nodemailer (+ Handlebars templates).",
+        "Atlaz mailer API - Herrscher of Void (+ Handlebars templates).",
       version: "1.0.0",
     },
     servers: [
