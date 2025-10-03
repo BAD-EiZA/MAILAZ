@@ -16,6 +16,7 @@ RUN pnpm install --prod
 
 # Copy source
 COPY src ./src
+COPY views ./views
 
 ENV SMTP_PORT=587
 ENV SMTP_SECURE=false       
