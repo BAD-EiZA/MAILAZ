@@ -96,7 +96,7 @@ app.addSchema({
   $id: "SendEmailRequest",
   type: "object",
   required: ["recipients", "subject"],
-  additionalProperties: false,
+  additionalProperties: true,
   properties: {
     recipients: {
       type: "array",
@@ -284,6 +284,11 @@ const createSendHandler = (
         const fail = [];
         const startTime = Date.now();
 
+        let htmlTemplate = null;
+        if (html) {
+          htmlTemplate = hbs.compile(html);
+        }
+
         // Mode A: Delayed Sequence (Looping)
         // ID: Mode A: Urutan dengan Jeda
         if (delaySeconds > 0) {
@@ -298,11 +303,18 @@ const createSendHandler = (
             }
 
             try {
+              const finalHtml = htmlTemplate ? htmlTemplate(r) : undefined;
+
+              // Jika user pakai template file (.handlebars di folder views), context digabung dengan r
+              const finalContext = template ? { ...context, ...r } : {};
+
               const res = await transporterInstance.sendMail({
                 from,
                 to: fmt(r),
-                subject,
-                ...(template ? { template, context } : { html }),
+                subject, // Subjek juga bisa dibuat dinamis jika mau: handlebars.compile(subject)(r)
+                ...(template
+                  ? { template, context: finalContext }
+                  : { html: finalHtml }),
               });
 
               ok.push({
