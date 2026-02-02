@@ -1,11 +1,12 @@
 /**
  * server.js
- * Author: Herrscher of Void
- * Updated by: Gemini
+ * Author: Herrscher of Void (Updated by Gemini)
  *
- * EN: Fastify + Nodemailer mail API (Multi-account + Bulk Delay Support).
- * JP: Fastify と Nodemailer を使ったメール API（複数アカウント + 遅延送信対応）。
- * ID: API email menggunakan Fastify + Nodemailer (Multi-akun + Dukungan Jeda Kirim).
+ * Features:
+ * - Multi-SMTP Support (General, Partnership, Marketing)
+ * - Dynamic HTML Rendering (Handlebars)
+ * - Bulk Sending with Delay
+ * - Swagger Documentation
  */
 
 require("dotenv").config();
@@ -13,14 +14,15 @@ require("dotenv").config();
 const fastify = require("fastify");
 const cors = require("@fastify/cors");
 const nodemailer = require("nodemailer");
-const hbs =
-  require("nodemailer-express-handlebars").default ||
-  require("nodemailer-express-handlebars");
+const hbs = require("nodemailer-express-handlebars");
+const handlebars = require("handlebars"); // Engine core untuk compile raw HTML
 const path = require("path");
 const swagger = require("@fastify/swagger");
 const swaggerUI = require("@fastify/swagger-ui");
 
 const isProd = process.env.NODE_ENV === "production";
+
+// Inisialisasi Fastify
 const app = fastify({
   logger: isProd
     ? true
@@ -33,35 +35,36 @@ const app = fastify({
 });
 
 // -----------------------------------------------------------------------------
-// CORS
+// 1. MIDDLEWARE & PLUGINS
 // -----------------------------------------------------------------------------
+
+// CORS (Izinkan akses dari Frontend)
 app.register(cors, {
   origin: "*",
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["*"],
 });
 
-// -----------------------------------------------------------------------------
-// Swagger / OpenAPI
-// -----------------------------------------------------------------------------
+// Swagger (Dokumentasi API)
 app.register(swagger, {
   openapi: {
     openapi: "3.1.0",
     info: {
       title: "Atlaz Mail Service",
-      description: "Atlaz mailer API - Multi-channel support with Bulk Delay.",
-      version: "1.1.0",
+      description:
+        "API Email Multi-Channel dengan dukungan Dynamic Template & Delay.",
+      version: "2.0.0",
     },
     servers: [
       {
         url: process.env.PUBLIC_BASE_URL || "http://localhost:3000",
-        description: "Current server",
+        description: "Local Server",
       },
     ],
     tags: [
-      { name: "General", description: "Default SMTP Account" },
-      { name: "Partnership", description: "Partnership SMTP Account" },
-      { name: "Marketing", description: "Marketing SMTP Account" },
+      { name: "General", description: "Default SMTP" },
+      { name: "Partnership", description: "Partnership SMTP" },
+      { name: "Marketing", description: "Marketing SMTP" },
     ],
   },
 });
@@ -74,112 +77,16 @@ app.register(swaggerUI, {
 });
 
 // -----------------------------------------------------------------------------
-// Helper: Sleep for Delay
+// 2. HELPER FUNCTIONS
 // -----------------------------------------------------------------------------
+
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// -----------------------------------------------------------------------------
-// JSON Schemas
-// -----------------------------------------------------------------------------
-app.addSchema({
-  $id: "Recipient",
-  type: "object",
-  required: ["email"],
-  additionalProperties: false,
-  properties: {
-    email: { type: "string", format: "email" },
-    name: { type: "string" },
-  },
-});
-
-app.addSchema({
-  $id: "SendEmailRequest",
-  type: "object",
-  required: ["recipients", "subject"],
-  additionalProperties: true,
-  properties: {
-    recipients: {
-      type: "array",
-      minItems: 1,
-      items: { $ref: "Recipient#" },
-    },
-    template: { type: "string", description: "Template in /views" },
-    context: { type: "object", description: "Variables for Handlebars" },
-    html: { type: "string", description: "Raw HTML" },
-    subject: { type: "string", minLength: 1, maxLength: 255 },
-    from: { type: "string", description: "Display name override" },
-    individual: {
-      type: "boolean",
-      default: false,
-      description: "true: send one-by-one; false: single BCC email",
-    },
-    // EN: New feature: Delay between emails
-    // ID: Fitur baru: Jeda antar email (detik)
-    delaySeconds: {
-      type: "integer",
-      minimum: 0,
-      default: 0,
-      description:
-        "Delay in seconds between each email (Forces individual=true)",
-    },
-  },
-  anyOf: [{ required: ["template"] }, { required: ["html"] }],
-  examples: [
-    {
-      recipients: [
-        { email: "user1@example.com" },
-        { email: "user2@example.com" },
-      ],
-      html: "<p>Promo content</p>",
-      subject: "Marketing Blast",
-      individual: true,
-      delaySeconds: 3, // ID: Contoh jeda 3 detik
-    },
-  ],
-});
-
-// Response Schemas (Re-used)
-app.addSchema({
-  $id: "SendEmailResponseBcc",
-  type: "object",
-  properties: {
-    mode: { type: "string", const: "bcc" },
-    messageId: { type: "string" },
-    accepted: { type: "array", items: { type: "string" } },
-    rejected: { type: "array", items: { type: "string" } },
-  },
-});
-
-app.addSchema({
-  $id: "SendEmailResponseIndividual",
-  type: "object",
-  properties: {
-    mode: { type: "string", enum: ["individual", "individual_delayed"] },
-    totalSent: { type: "integer" },
-    durationSeconds: { type: "number" },
-    ok: { type: "array" },
-    fail: { type: "array" },
-  },
-});
-
-app.addSchema({
-  $id: "ErrorResponse",
-  type: "object",
-  properties: {
-    error: { type: "string" },
-    message: { type: "string" },
-  },
-});
-
-// -----------------------------------------------------------------------------
-// Transporter Factory
-// -----------------------------------------------------------------------------
-// EN: Function to create and configure a transporter
-// ID: Fungsi untuk membuat dan mengonfigurasi transporter
+// Factory untuk membuat Transporter Nodemailer
 const createTransporter = (label, user, pass) => {
   if (!user || !pass) {
     app.log.warn(
-      `[${label}] Missing credentials. This transporter will fail if used.`,
+      `[${label}] Credentials missing in .env. This channel will fail if used.`,
     );
     return null;
   }
@@ -191,36 +98,42 @@ const createTransporter = (label, user, pass) => {
     auth: { user, pass },
   });
 
-  // Attach Handlebars
-  t.use(
-    "compile",
-    hbs({
-      viewEngine: {
-        partialsDir: path.resolve("./views/"),
-        defaultLayout: false,
-      },
-      viewPath: path.resolve("./views/"),
-    }),
-  );
+  // Attach Plugin Handlebars (untuk mode file template .handlebars)
+  // Pastikan folder 'views' ada di root project Anda
+  try {
+    t.use(
+      "compile",
+      hbs({
+        viewEngine: {
+          partialsDir: path.resolve("./views/"),
+          defaultLayout: false,
+        },
+        viewPath: path.resolve("./views/"),
+      }),
+    );
+  } catch (e) {
+    app.log.warn(
+      `[${label}] Failed to attach handlebars plugin (folder views missing?). Raw HTML still works.`,
+    );
+  }
 
   return t;
 };
 
-// 1. Main Transporter
+// -----------------------------------------------------------------------------
+// 3. INITIALIZE TRANSPORTERS
+// -----------------------------------------------------------------------------
+
 const mainTransporter = createTransporter(
   "MAIN",
   process.env.SMTP_USER,
   process.env.SMTP_PASS,
 );
-
-// 2. Partnership Transporter
 const partnershipTransporter = createTransporter(
   "PARTNERSHIP",
   process.env.SMTP_USER_PARTNERSHIP,
   process.env.SMTP_PASS_PARTNERSHIP,
 );
-
-// 3. Marketing Transporter
 const marketingTransporter = createTransporter(
   "MARKETING",
   process.env.SMTP_USER_MARKETING,
@@ -228,194 +141,230 @@ const marketingTransporter = createTransporter(
 );
 
 // -----------------------------------------------------------------------------
-// Shared Route Logic
+// 4. JSON SCHEMAS
 // -----------------------------------------------------------------------------
-/**
- * Generic handler for sending emails
- * @param {Object} transporterInstance - The nodemailer transporter to use
- * @param {String} defaultFromEmail - The default sender email for this account
- * @param {String} defaultFromName - The default sender name
- */
+
+// Schema Penerima (Allow extra properties like city, company, etc.)
+app.addSchema({
+  $id: "Recipient",
+  type: "object",
+  required: ["email"],
+  additionalProperties: true, // PENTING: Agar bisa terima kolom dinamis dari Excel
+  properties: {
+    email: { type: "string", format: "email" },
+    name: { type: "string" },
+  },
+});
+
+// Schema Request Body
+app.addSchema({
+  $id: "SendEmailRequest",
+  type: "object",
+  required: ["recipients", "subject"],
+  properties: {
+    recipients: {
+      type: "array",
+      minItems: 1,
+      items: { $ref: "Recipient#" },
+    },
+    subject: { type: "string" },
+    html: {
+      type: "string",
+      description: "Raw HTML string (support handlebars syntax)",
+    },
+    template: {
+      type: "string",
+      description: "Filename in /views (without extension)",
+    },
+    context: {
+      type: "object",
+      description: "Global context for all recipients",
+    },
+    delaySeconds: {
+      type: "integer",
+      default: 0,
+      description: "Delay per email in seconds",
+    },
+    from: { type: "string", description: "Override sender name" },
+    individual: { type: "boolean", default: true },
+  },
+});
+
+// Schema Responses
+app.addSchema({
+  $id: "SendEmailResponse",
+  type: "object",
+  properties: {
+    mode: { type: "string" },
+    totalSent: { type: "integer" },
+    durationSeconds: { type: "number" },
+    ok: { type: "array" },
+    fail: { type: "array" },
+  },
+});
+
+// -----------------------------------------------------------------------------
+// 5. SHARED LOGIC (THE CORE)
+// -----------------------------------------------------------------------------
+
 const createSendHandler = (
   transporterInstance,
   defaultFromEmail,
   defaultFromName,
 ) => {
   return async (req, reply) => {
-    // Safety check if transporter failed to initialize
     if (!transporterInstance) {
-      return reply.code(500).send({
-        error: "CONFIGURATION_ERROR",
-        message:
-          "This email channel is not configured on the server (missing ENV).",
-      });
+      return reply
+        .code(500)
+        .send({
+          error: "CONFIG_ERROR",
+          message: "Channel ini belum dikonfigurasi di .env",
+        });
     }
 
     const {
       recipients,
       subject,
+      html,
       template,
       context = {},
-      html,
-      from: userFromName,
-      individual = false,
       delaySeconds = 0,
+      from: senderNameOverride,
+      individual = true,
     } = req.body;
 
+    // Helper format "Name <email>"
     const fmt = (r) => (r.name ? `"${r.name}" <${r.email}>` : r.email);
 
-    try {
-      // Logic for Sender Name
-      const displayName = userFromName || defaultFromName || "No-Reply";
-      const from = `"${displayName}" <${defaultFromEmail}>`;
+    // Tentukan Pengirim
+    const finalSenderName = senderNameOverride || defaultFromName || "Atlaz";
+    const fromAddress = `"${finalSenderName}" <${defaultFromEmail}>`;
 
-      if (!template && !html) {
-        return reply.code(400).send({
-          error: "BAD_REQUEST",
-          message: "Provide either 'template' or 'html'.",
-        });
+    // Persiapkan Template Compiler (Jika pakai Raw HTML)
+    let htmlCompiler = null;
+    if (html) {
+      try {
+        htmlCompiler = handlebars.compile(html);
+      } catch (e) {
+        return reply
+          .code(400)
+          .send({
+            error: "HTML_ERROR",
+            message: "Syntax Handlebars di HTML salah.",
+          });
       }
+    }
 
-      // EN: Logic for Individual Sending (Parallel OR Delayed)
-      // ID: Logika Pengiriman Individual (Paralel ATAU Jeda/Delay)
-      // Note: If delaySeconds > 0, we force individual mode.
-      if (individual || delaySeconds > 0) {
-        const ok = [];
-        const fail = [];
-        const startTime = Date.now();
+    const ok = [];
+    const fail = [];
+    const startTime = Date.now();
 
-        let htmlTemplate = null;
-        if (html) {
-          htmlTemplate = hbs.compile(html);
+    // MODE INDIVIDUAL (Looping dengan Delay)
+    // Wajib digunakan jika ingin Variabel Dinamis per user
+    if (individual || delaySeconds > 0 || htmlCompiler) {
+      req.log.info(
+        `Starting sending to ${recipients.length} recipients. Delay: ${delaySeconds}s`,
+      );
+
+      for (const [idx, recipient] of recipients.entries()) {
+        // Apply Delay (kecuali email pertama)
+        if (idx > 0 && delaySeconds > 0) {
+          await sleep(delaySeconds * 1000);
         }
 
-        // Mode A: Delayed Sequence (Looping)
-        // ID: Mode A: Urutan dengan Jeda
-        if (delaySeconds > 0) {
-          req.log.info(
-            `Starting delayed sending. Delay: ${delaySeconds}s per email.`,
-          );
+        try {
+          // Gabungkan Data: Global Context + Data Spesifik User (Excel)
+          // Data user (recipient) akan menimpa Global Context jika key-nya sama
+          const combinedContext = { ...context, ...recipient };
 
-          for (const [index, r] of recipients.entries()) {
-            // Apply delay ONLY if it's not the very first email
-            if (index > 0) {
-              await sleep(delaySeconds * 1000);
-            }
+          let mailOptions = {
+            from: fromAddress,
+            to: fmt(recipient),
+            subject: subject, // Bisa dibuat dinamis juga: handlebars.compile(subject)(combinedContext)
+          };
 
-            try {
-              const finalHtml = htmlTemplate ? htmlTemplate(r) : undefined;
-
-              // Jika user pakai template file (.handlebars di folder views), context digabung dengan r
-              const finalContext = template ? { ...context, ...r } : {};
-
-              const res = await transporterInstance.sendMail({
-                from,
-                to: fmt(r),
-                subject, // Subjek juga bisa dibuat dinamis jika mau: handlebars.compile(subject)(r)
-                ...(template
-                  ? { template, context: finalContext }
-                  : { html: finalHtml }),
-              });
-
-              ok.push({
-                recipient: r.email,
-                messageId: res.messageId,
-                accepted: res.accepted,
-              });
-            } catch (err) {
-              fail.push({
-                recipient: r.email,
-                error: err.message,
-              });
-            }
+          if (template) {
+            // Mode A: File Template Server
+            mailOptions.template = template;
+            mailOptions.context = combinedContext;
+          } else if (htmlCompiler) {
+            // Mode B: Raw HTML dari Frontend (Compiled)
+            mailOptions.html = htmlCompiler(combinedContext);
+          } else {
+            // Mode C: Plain Text fallback (jarang dipakai)
+            mailOptions.text = "No content provided.";
           }
 
-          const duration = (Date.now() - startTime) / 1000;
-          return reply.code(207).send({
-            mode: "individual_delayed",
-            totalSent: ok.length,
-            durationSeconds: duration,
-            ok,
-            fail,
-          });
-        } else {
-          // Mode B: Parallel (Promise.all) - Original fast method
-          // ID: Mode B: Paralel (Cepat)
-          const results = await Promise.allSettled(
-            recipients.map((r) =>
-              transporterInstance.sendMail({
-                from,
-                to: fmt(r),
-                subject,
-                ...(template ? { template, context } : { html }),
-              }),
-            ),
-          );
+          const info = await transporterInstance.sendMail(mailOptions);
 
-          results.forEach((res, idx) => {
-            const target = recipients[idx];
-            if (res.status === "fulfilled") {
-              ok.push({
-                recipient: target.email,
-                messageId: res.value.messageId,
-                accepted: res.value.accepted,
-              });
-            } else {
-              fail.push({
-                recipient: target.email,
-                error: String(res.reason?.message || res.reason),
-              });
-            }
+          ok.push({
+            recipient: recipient.email,
+            messageId: info.messageId,
+            status: "sent",
           });
-
-          return reply.code(207).send({ mode: "individual", ok, fail });
+        } catch (err) {
+          req.log.error({ recipient: recipient.email, err }, "Send failed");
+          fail.push({
+            recipient: recipient.email,
+            error: err.message,
+          });
         }
-      } else {
-        // EN: BCC Mode (Single email, multiple hidden recipients)
-        // ID: Mode BCC (Satu email, banyak penerima tersembunyi)
+      }
+
+      const duration = (Date.now() - startTime) / 1000;
+      return reply.code(200).send({
+        mode: "individual_dynamic",
+        totalSent: ok.length,
+        durationSeconds: duration,
+        ok,
+        fail,
+      });
+    } else {
+      // MODE BCC (Sekali kirim ke banyak orang - Tidak support variabel dinamis per user)
+      // Hanya dipakai jika individual=false DAN tidak ada delay
+      try {
         const bccList = recipients.map(fmt).join(", ");
         const info = await transporterInstance.sendMail({
-          from,
+          from: fromAddress,
           bcc: bccList,
           subject,
-          ...(template ? { template, context } : { html }),
+          html: html, // Raw HTML static
+          template: template,
+          context: context, // Global context only
         });
 
         return reply.send({
-          mode: "bcc",
+          mode: "bcc_bulk",
           messageId: info.messageId,
-          accepted: info.accepted,
-          rejected: info.rejected,
+          ok: recipients.map((r) => ({
+            recipient: r.email,
+            status: "bcc_sent",
+          })),
+          fail: [],
         });
+      } catch (err) {
+        return reply
+          .code(500)
+          .send({ error: "BCC_FAILED", message: err.message });
       }
-    } catch (err) {
-      req.log.error({ err }, "Failed to send email");
-      return reply
-        .code(500)
-        .send({ error: "EMAIL_SEND_FAILED", message: err.message });
     }
   };
 };
 
 // -----------------------------------------------------------------------------
-// Routes
+// 6. ROUTES
 // -----------------------------------------------------------------------------
 
-app.get("/health", async () => ({ ok: true }));
+app.get("/health", async () => ({ status: "ok", uptime: process.uptime() }));
 
-// 1. General Endpoint
+// Endpoint General
 app.post(
   "/send-email",
   {
     schema: {
       tags: ["General"],
-      summary: "Send via General Account",
       body: { $ref: "SendEmailRequest#" },
-      response: {
-        200: { $ref: "SendEmailResponseBcc#" },
-        207: { $ref: "SendEmailResponseIndividual#" },
-        500: { $ref: "ErrorResponse#" },
-      },
+      response: { 200: { $ref: "SendEmailResponse#" } },
     },
   },
   createSendHandler(
@@ -425,62 +374,54 @@ app.post(
   ),
 );
 
-// 2. Partnership Endpoint
+// Endpoint Partnership
 app.post(
   "/send-email/partnership",
   {
     schema: {
       tags: ["Partnership"],
-      summary: "Send via Partnership Account",
       body: { $ref: "SendEmailRequest#" },
-      response: {
-        200: { $ref: "SendEmailResponseBcc#" },
-        207: { $ref: "SendEmailResponseIndividual#" },
-        500: { $ref: "ErrorResponse#" },
-      },
+      response: { 200: { $ref: "SendEmailResponse#" } },
     },
   },
   createSendHandler(
     partnershipTransporter,
-    process.env.SMTP_USER_PARTNERSHIP, // Default Sender Email
-    "Atlaz Academy", // Default Sender Name
+    process.env.SMTP_USER_PARTNERSHIP,
+    "Atlaz Partnership",
   ),
 );
 
-// 3. Marketing Endpoint
+// Endpoint Marketing
 app.post(
   "/send-email/marketing",
   {
     schema: {
       tags: ["Marketing"],
-      summary: "Send via Marketing Account",
       body: { $ref: "SendEmailRequest#" },
-      response: {
-        200: { $ref: "SendEmailResponseBcc#" },
-        207: { $ref: "SendEmailResponseIndividual#" },
-        500: { $ref: "ErrorResponse#" },
-      },
+      response: { 200: { $ref: "SendEmailResponse#" } },
     },
   },
   createSendHandler(
     marketingTransporter,
-    process.env.SMTP_USER_MARKETING, // Default Sender Email
-    "Atlaz Academy", // Default Sender Name
+    process.env.SMTP_USER_MARKETING,
+    "Atlaz Marketing",
   ),
 );
 
 // -----------------------------------------------------------------------------
-// Start server
+// 7. START SERVER
 // -----------------------------------------------------------------------------
-const port = Number(process.env.PORT || 3000);
-app
-  .listen({ port, host: "0.0.0.0" })
-  .then(() =>
-    app.log.info(
-      `Server running on http://0.0.0.0:${port} (Swagger UI: /docs)`,
-    ),
-  )
-  .catch((err) => {
-    app.log.error({ err }, "Server failed to start");
+
+const start = async () => {
+  try {
+    const port = Number(process.env.PORT || 3000);
+    await app.listen({ port, host: "0.0.0.0" });
+    app.log.info(`Server running at http://localhost:${port}`);
+    app.log.info(`Swagger UI available at http://localhost:${port}/docs`);
+  } catch (err) {
+    app.log.error(err);
     process.exit(1);
-  });
+  }
+};
+
+start();
