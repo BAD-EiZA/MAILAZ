@@ -303,18 +303,11 @@ const createSendHandler = (
             }
 
             try {
-              const finalHtml = htmlTemplate ? htmlTemplate(r) : undefined;
-
-              // Jika user pakai template file (.handlebars di folder views), context digabung dengan r
-              const finalContext = template ? { ...context, ...r } : {};
-
               const res = await transporterInstance.sendMail({
                 from,
                 to: fmt(r),
-                subject, // Subjek juga bisa dibuat dinamis jika mau: handlebars.compile(subject)(r)
-                ...(template
-                  ? { template, context: finalContext }
-                  : { html: finalHtml }),
+                subject,
+                ...(template ? { template, context } : { html }),
               });
 
               ok.push({
