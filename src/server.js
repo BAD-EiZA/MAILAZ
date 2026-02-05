@@ -151,7 +151,7 @@ app.addSchema({
   required: ["email"],
   additionalProperties: true, // PENTING: Agar bisa terima kolom dinamis dari Excel
   properties: {
-    email: { type: "string", format: "email" },
+    email: { type: "string" },
     name: { type: "string" },
   },
 });
