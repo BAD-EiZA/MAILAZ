@@ -101,14 +101,19 @@ const createTransporter = (label, user, pass) => {
   // Attach Plugin Handlebars (untuk mode file template .handlebars)
   // Pastikan folder 'views' ada di root project Anda
   try {
+    // Gunakan "../views" untuk keluar dari folder src, lalu masuk ke folder views
+    const viewPath = path.join(__dirname, "../views"); 
+    
     t.use(
       "compile",
       hbs({
         viewEngine: {
-          partialsDir: path.resolve("./views/"),
+          extname: ".handlebars",
+          partialsDir: viewPath,
           defaultLayout: false,
         },
-        viewPath: path.resolve("./views/"),
+        viewPath: viewPath,
+        extName: ".handlebars", // Pastikan huruf besar-kecilnya sama persis
       }),
     );
   } catch (e) {
