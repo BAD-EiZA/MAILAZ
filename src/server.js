@@ -105,7 +105,8 @@ const createTransporter = (label, user, pass) => {
     viewPath: path.resolve("./views/"),
   };
 
-  t.use("compile", hbs(handlebarOptions));
+  const hbsPlugin = typeof hbs === "function" ? hbs : hbs.default;
+  t.use("compile", hbsPlugin(handlebarOptions));
 
   return t;
 };
