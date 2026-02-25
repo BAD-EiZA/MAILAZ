@@ -85,9 +85,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 // Factory untuk membuat Transporter Nodemailer
 const createTransporter = (label, user, pass) => {
   if (!user || !pass) {
-    app.log.warn(
-      `[${label}] Credentials missing in .env. This channel will fail if used.`,
-    );
+    app.log.warn(`[${label}] Credentials missing in .env.`);
     return null;
   }
 
@@ -98,31 +96,16 @@ const createTransporter = (label, user, pass) => {
     auth: { user, pass },
   });
 
-  // Attach Plugin Handlebars (untuk mode file template .handlebars)
-  // Pastikan folder 'views' ada di root project Anda
- // Attach Plugin Handlebars
-  const viewPath = path.join(__dirname, "../views"); // Akan mengarah ke /app/views di Docker
-  
-  try {
-    t.use(
-      "compile",
-      hbs({
-        viewEngine: {
-          extname: ".handlebars",
-          partialsDir: viewPath,
-          layoutsDir: viewPath, // WAJIB DITAMBAHKAN
-          defaultLayout: false,
-        },
-        viewPath: viewPath,
-        extName: ".handlebars", // WAJIB HURUF BESAR "N"
-      }),
-    );
-    // Tambahkan log ini untuk memastikan plugin berhasil terpasang saat server start
-    console.log(`[${label}] Handlebars plugin attached. Path: ${viewPath}`); 
-  } catch (e) {
-    // Ubah log ke error agar jika gagal, penyebab aslinya langsung terlihat di log Docker
-    console.error(`[${label}] GAGAL memasang Handlebars:`, e.message); 
-  }
+  // Persis seperti di LMS Anda
+  const handlebarOptions = {
+    viewEngine: {
+      partialsDir: path.resolve("./views/"),
+      defaultLayout: false,
+    },
+    viewPath: path.resolve("./views/"),
+  };
+
+  t.use("compile", hbs(handlebarOptions));
 
   return t;
 };
