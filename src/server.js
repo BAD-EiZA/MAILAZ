@@ -100,26 +100,28 @@ const createTransporter = (label, user, pass) => {
 
   // Attach Plugin Handlebars (untuk mode file template .handlebars)
   // Pastikan folder 'views' ada di root project Anda
+ // Attach Plugin Handlebars
+  const viewPath = path.join(__dirname, "../views"); // Akan mengarah ke /app/views di Docker
+  
   try {
-    // Gunakan "../views" untuk keluar dari folder src, lalu masuk ke folder views
-    const viewPath = path.join(__dirname, "../views"); 
-    
     t.use(
       "compile",
       hbs({
         viewEngine: {
           extname: ".handlebars",
           partialsDir: viewPath,
+          layoutsDir: viewPath, // WAJIB DITAMBAHKAN
           defaultLayout: false,
         },
         viewPath: viewPath,
-        extName: ".handlebars", // Pastikan huruf besar-kecilnya sama persis
+        extName: ".handlebars", // WAJIB HURUF BESAR "N"
       }),
     );
+    // Tambahkan log ini untuk memastikan plugin berhasil terpasang saat server start
+    console.log(`[${label}] Handlebars plugin attached. Path: ${viewPath}`); 
   } catch (e) {
-    app.log.warn(
-      `[${label}] Failed to attach handlebars plugin (folder views missing?). Raw HTML still works.`,
-    );
+    // Ubah log ke error agar jika gagal, penyebab aslinya langsung terlihat di log Docker
+    console.error(`[${label}] GAGAL memasang Handlebars:`, e.message); 
   }
 
   return t;
