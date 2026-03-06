@@ -205,12 +205,10 @@ const createSendHandler = (
 ) => {
   return async (req, reply) => {
     if (!transporterInstance) {
-      return reply
-        .code(500)
-        .send({
-          error: "CONFIG_ERROR",
-          message: "Channel ini belum dikonfigurasi di .env",
-        });
+      return reply.code(500).send({
+        error: "CONFIG_ERROR",
+        message: "Channel ini belum dikonfigurasi di .env",
+      });
     }
 
     const {
@@ -237,12 +235,10 @@ const createSendHandler = (
       try {
         htmlCompiler = handlebars.compile(html);
       } catch (e) {
-        return reply
-          .code(400)
-          .send({
-            error: "HTML_ERROR",
-            message: "Syntax Handlebars di HTML salah.",
-          });
+        return reply.code(400).send({
+          error: "HTML_ERROR",
+          message: "Syntax Handlebars di HTML salah.",
+        });
       }
     }
 
@@ -251,7 +247,6 @@ const createSendHandler = (
     const startTime = Date.now();
 
     // MODE INDIVIDUAL (Looping dengan Delay)
-    // Wajib digunakan jika ingin Variabel Dinamis per user
     if (individual || delaySeconds > 0 || htmlCompiler) {
       req.log.info(
         `Starting sending to ${recipients.length} recipients. Delay: ${delaySeconds}s`,
@@ -264,39 +259,38 @@ const createSendHandler = (
         }
 
         try {
-          // Gabungkan Data: Global Context + Data Spesifik User (Excel)
-          // Data user (recipient) akan menimpa Global Context jika key-nya sama
           const combinedContext = { ...context, ...recipient };
 
           let mailOptions = {
             from: fromAddress,
             to: fmt(recipient),
-            subject: subject, // Bisa dibuat dinamis juga: handlebars.compile(subject)(combinedContext)
+            subject: subject,
           };
 
           if (template) {
-            // Mode A: File Template Server
             mailOptions.template = template;
             mailOptions.context = combinedContext;
           } else if (htmlCompiler) {
-            // Mode B: Raw HTML dari Frontend (Compiled)
             mailOptions.html = htmlCompiler(combinedContext);
           } else {
-            // Mode C: Plain Text fallback (jarang dipakai)
             mailOptions.text = "No content provided.";
           }
 
           const info = await transporterInstance.sendMail(mailOptions);
 
+          // RECORD JIKA BERHASIL
           ok.push({
             recipient: recipient.email,
-            messageId: info.messageId,
             status: "sent",
+            messageId: info.messageId,
           });
         } catch (err) {
           req.log.error({ recipient: recipient.email, err }, "Send failed");
+
+          // RECORD JIKA GAGAL
           fail.push({
             recipient: recipient.email,
+            status: "failed", // Tambahan status failed
             error: err.message,
           });
         }
@@ -305,31 +299,35 @@ const createSendHandler = (
       const duration = (Date.now() - startTime) / 1000;
       return reply.code(200).send({
         mode: "individual_dynamic",
+        totalProcessed: recipients.length, // Tambahan info total diproses
         totalSent: ok.length,
+        totalFailed: fail.length, // Tambahan info total gagal
         durationSeconds: duration,
         ok,
         fail,
       });
     } else {
-      // MODE BCC (Sekali kirim ke banyak orang - Tidak support variabel dinamis per user)
-      // Hanya dipakai jika individual=false DAN tidak ada delay
+      // MODE BCC (Bulk / Massal tanpa delay)
       try {
         const bccList = recipients.map(fmt).join(", ");
         const info = await transporterInstance.sendMail({
           from: fromAddress,
           bcc: bccList,
           subject,
-          html: html, // Raw HTML static
+          html: html,
           template: template,
-          context: context, // Global context only
+          context: context,
         });
 
         return reply.send({
           mode: "bcc_bulk",
           messageId: info.messageId,
+          totalProcessed: recipients.length,
+          totalSent: recipients.length,
+          totalFailed: 0,
           ok: recipients.map((r) => ({
             recipient: r.email,
-            status: "bcc_sent",
+            status: "sent",
           })),
           fail: [],
         });
