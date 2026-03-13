@@ -22,8 +22,8 @@ ENV SMTP_PORT=587
 ENV SMTP_SECURE=false       
 ENV SMTP_USER=no-reply@hiatlaz.com
 ENV SMTP_PASS=fmxufdwhlechkdqq
-ENV SMTP_USER_MARKETING=atlaz.marketing1@gmail.com
-ENV SMTP_PASS_MARKETING=gheejehwnpydmpof
+ENV SMTP_USER_MARKETING=hi@hiatlaz.com
+ENV SMTP_PASS_MARKETING=imyjthafpmibpgdx
 ENV SMTP_USER_PARTNERSHIP=partnership@hiatlaz.com
 ENV SMTP_PASS_PARTNERSHIP=pftemeqdflahloje
 

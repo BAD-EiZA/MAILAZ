@@ -64,7 +64,7 @@ app.register(swagger, {
     tags: [
       { name: "General", description: "Default SMTP" },
       { name: "Partnership", description: "Partnership SMTP" },
-      { name: "Marketing", description: "Marketing SMTP" },
+      { name: "Hiatlaz", description: "Hiatlaz SMTP" },
     ],
   },
 });
@@ -126,7 +126,7 @@ const partnershipTransporter = createTransporter(
   process.env.SMTP_PASS_PARTNERSHIP,
 );
 const marketingTransporter = createTransporter(
-  "MARKETING",
+  "HIATLAZ",
   process.env.SMTP_USER_MARKETING,
   process.env.SMTP_PASS_MARKETING,
 );
@@ -393,7 +393,7 @@ app.post(
   createSendHandler(
     marketingTransporter,
     process.env.SMTP_USER_MARKETING,
-    "Atlaz Marketing",
+    "Hiatlaz",
   ),
 );
 
